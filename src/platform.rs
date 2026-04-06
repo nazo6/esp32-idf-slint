@@ -31,8 +31,12 @@ impl Platform for MyPlatform {
     }
 }
 
+const NUM_BUFFERS: usize = 12;
+
 struct LineBuf<'a> {
     display: &'a mut Display,
+    buffers: &'a mut [[BigEndianRgb565Pixel; WIDTH]],
+    buffer_idx: &'a mut usize,
 }
 
 impl<'a> LineBufferProvider for LineBuf<'a> {
@@ -45,14 +49,16 @@ impl<'a> LineBufferProvider for LineBuf<'a> {
         render_fn: impl FnOnce(&mut [Self::TargetPixel]),
     ) {
         let len = range.end - range.start;
-        let mut tmp_buf = [BigEndianRgb565Pixel(0, 0); WIDTH];
-        render_fn(&mut tmp_buf[0..len]);
+        let buf = &mut self.buffers[*self.buffer_idx][0..len];
+        render_fn(buf);
 
         let _ = self
             .display
             .draw(range.start as u16, line as u16, len as u16, 1, unsafe {
-                core::slice::from_raw_parts(tmp_buf.as_ptr() as *const u8, len * 2)
+                core::slice::from_raw_parts(buf.as_ptr() as *const u8, len * 2)
             });
+            
+        *self.buffer_idx = (*self.buffer_idx + 1) % NUM_BUFFERS;
     }
 }
 
@@ -68,6 +74,9 @@ pub fn run_ui(display: &mut Display) {
     let ui = MainWindow::new().unwrap();
     ui.show().expect("Failed to show the UI");
 
+    let mut line_buffers = vec![[BigEndianRgb565Pixel(0, 0); WIDTH]; NUM_BUFFERS];
+    let mut buffer_idx = 0;
+
     loop {
         // Let Slint run the timer hooks and update animatios.
         slint::platform::update_timers_and_animations();
@@ -77,7 +86,11 @@ pub fn run_ui(display: &mut Display) {
         //     window.try_dispatch_event(e).unwrap();
         // }
 
-        let frame_buffer = LineBuf { display };
+        let frame_buffer = LineBuf {
+            display,
+            buffers: &mut line_buffers,
+            buffer_idx: &mut buffer_idx,
+        };
 
         // Draw the scene if something needs to be drawn.
         window.draw_if_needed(|renderer| {
