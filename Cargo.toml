@@ -1,0 +1,41 @@
+[package]
+name = "esp32-idf-slint"
+version = "0.1.0"
+edition = "2024"
+
+[[package.metadata.esp-idf-sys.extra_components]]
+remote_component = { name = "atanisoft/esp_lcd_ili9488", version = "1.1.0" }
+bindings_header = "esp_lcd_ili9488.h"
+
+[[bin]]
+harness = false  # do not use the built-in cargo test harness -> resolve rust-analyzer errors
+name = "esp32-idf-slint"
+
+[dependencies]
+# Remove `generic-queue-8` if you plan to use `embassy-time` WITH `embassy-executor`
+embassy-time = { version = "0.5.1", features = ["generic-queue-8"] }
+esp-idf-svc = { version = "0.52.1", features = [
+  "critical-section",
+  "embassy-sync",
+  "embassy-time-driver"
+] }
+esp-idf-sys = { version = "0.37.2" }
+log = { version = "0.4.29" }
+slint = { version = "1.15", default-features = false, features = [
+  "compat-1-2",
+  "libm",
+  "renderer-software",
+  "unsafe-single-threaded"
+] }
+slint-renderer-software-custom = { path = "../../github.com/nazo6/slint-renderer-software-custom", version = "0.1.0", default-features = false, features = [
+  "libm"
+] }
+
+[build-dependencies]
+embuild = "0.33"
+slint-build = "1.15"
+
+[patch.crates-io]
+esp-idf-hal = { git = "https://github.com/esp-rs/esp-idf-hal.git" }
+esp-idf-svc = { git = "https://github.com/esp-rs/esp-idf-svc.git" }
+esp-idf-sys = { git = "https://github.com/esp-rs/esp-idf-sys.git" }

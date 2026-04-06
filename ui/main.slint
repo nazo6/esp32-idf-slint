@@ -1,0 +1,44 @@
+import { AboutSlint, Button, VerticalBox, ScrollView } from "std-widgets.slint";
+
+export component MainWindow inherits Window {
+    property <int> counter: 0;
+    VerticalBox {
+        alignment: start;
+        Text {
+            text: "Count: " + counter;
+            font-size: 24px;
+            color: black;
+            horizontal-alignment: center;
+        }
+
+        HorizontalLayout {
+            alignment: center;
+            Button {
+                text: "-1";
+                clicked => {
+                    counter -= 1
+                }
+            }
+
+            Button {
+                text: "+1";
+                clicked => {
+                    counter += 1
+                }
+            }
+        }
+
+        ScrollView {
+            width: 100%;
+            height: 200px;
+            mouse-drag-pan-enabled: true;
+            horizontal-scrollbar-policy: always-off;
+            vertical-scrollbar-policy: always-off;
+            viewport-width: 400px;
+            viewport-height: 400px;
+            Image {
+                source: @image-url("test.png");
+            }
+        }
+    }
+}
